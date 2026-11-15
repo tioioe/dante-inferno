@@ -18,7 +18,7 @@ WASD muoversi · mouse mirare · clic sinistro spada · clic destro/Q Fuoco di V
 `COSTRUISCI.bat` (richiede `npm install`) crea la cartella `upload/` (un solo `game.js` minificato + asset ottimizzati), da caricare in una sottocartella del sito.
 
 ## Documentazione
-La cartella [`docs/`](docs/) contiene i file di passaggio: stato, architettura, bilanciamento, come provare, licenze, prossimi passi, regole di lavoro. Partire da `docs/00_LEGGIMI_PRIMA.md`.
+La cartella [`docs/`](docs/) contiene i file di passaggio: partire da `docs/PASSAGGIO_COLLEGA.md`, poi `docs/00_LEGGIMI_PRIMA.md`.
 
 ## Moduli principali
 `main.js` (il gioco) · `bestiario-core.js` + `bestiario.js` (mostri procedurali ed effetti) · `bottino.js` (zaino, casse, pozioni, salvataggio, pausa, difficoltà) · `didattica.js` (cinematiche, addestramento, schede) · `prestazioni.js` · `avvisi.js` · `fx.js` · `hud.*` · `audio*.js` · `music*.js` · `maps.js`.
