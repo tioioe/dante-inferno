@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galleria dei mostri — Inferno</title>
+<link rel="stylesheet" href="hud.css">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0405;color:#e8d2b0}
+  canvas{display:block}
+  #top{position:fixed;left:0;right:0;top:10px;text-align:center;pointer-events:none;text-shadow:0 0 10px #000,0 2px 3px #000}
+  #top h1{font:700 26px var(--f-title);letter-spacing:.14em;margin:0;color:#f6dca6}
+  #top div{font:italic 16px var(--f-body);color:#d8b080;margin-top:3px}
+  .lb{position:fixed;transform:translate(-50%,0);text-align:center;pointer-events:none;white-space:nowrap;text-shadow:0 0 6px #000,0 2px 2px #000}
+  .lb b{display:block;font:700 13px var(--f-label);letter-spacing:.1em;color:#f6dca6}
+  .lb i{display:block;font:italic 13px var(--f-body);color:#bfa27c;margin-top:1px}
+  .lb.used b{color:#ffb060}.lb.used:after{content:"IN USO";display:block;font:700 9px var(--f-label);letter-spacing:.3em;color:#ff7a30;margin-top:1px}
+</style>
+</head>
+<body>
+<div id="top"><h1>I MOSTRI DEL PACCHETTO</h1><div>Quaternius · Ultimate Monsters · CC0 — clicca un mostro per cambiare animazione</div></div>
+<script type="importmap">{"imports":{"three":"./lib/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from './lib/jsm/loaders/GLTFLoader.js';
+import * as SkeletonUtils from './lib/jsm/utils/SkeletonUtils.js';
+const NAMES = [['Alien','Alieno'],['Birb','Uccellaccio'],['BlueDemon','Demone blu'],['Bunny','Coniglio'],['Cactoro','Cactoro'],['Demon','Demone'],['Dino','Dino'],['Fish','Pesce'],
+  ['Frog','Rana'],['Monkroose','Monkroose'],['MushroomKing','Re dei funghi'],['Ninja','Ninja'],['Orc','Orco'],['Orc_Skull','Orco teschio'],['Tribal','Tribale'],['Yeti','Yeti']];
+const USED = new Set(window.__USED || ['Demon','Orc_Skull','BlueDemon','Orc']);
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true; document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0e0506); scene.fog = new THREE.FogExp2(0x120808, 0.02);
+const camera = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.5, 100);
+scene.add(new THREE.HemisphereLight(0xb8a39a, 0x16100f, 1.1));
+const sun = new THREE.DirectionalLight(0xffd8bc, 2.2); sun.position.set(6, 12, 8); sun.castShadow = true; Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 12, bottom: -12 }); sun.shadow.mapSize.set(2048, 2048); scene.add(sun);
+const rim = new THREE.DirectionalLight(0x6a88ff, 0.8); rim.position.set(-8, 6, -8); scene.add(rim);
+const warm = new THREE.PointLight(0xff6a20, 120, 30, 2); warm.position.set(0, 3, 4); scene.add(warm);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshStandardMaterial({ color: 0x241a17, roughness: 0.95 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const COLS = 4, GX = 4.2, GZ = 4.6, items = [], loader = new GLTFLoader(), clock = new THREE.Clock();
+camera.position.set(0, 17, 21.5); camera.lookAt(0, 0.4, 0.2);
+const base = './assets_download/quaternius_monsters/Big/glTF/';
+NAMES.forEach(async ([file, label], i) => {
+  const col = i % COLS, row = Math.floor(i / COLS), x = (col - (COLS - 1) / 2) * GX, z = (row - 1.5) * GZ - 0.4;
+  try {
+    const g = await loader.loadAsync(base + file + '.gltf'); g.scene.updateMatrixWorld(true); g.scene.traverse(o => { if (o.isSkinnedMesh) o.skeleton.update(); });
+    const box = new THREE.Box3().setFromObject(g.scene, true), h = box.max.y - box.min.y, s = 1.9 / h;
+    const m = SkeletonUtils.clone(g.scene); m.scale.setScalar(s); m.position.y = -box.min.y * s; m.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    const root = new THREE.Group(); root.position.set(x, 0, z); root.add(m); scene.add(root);
+    const mixer = new THREE.AnimationMixer(m), clips = g.animations, it = { root, mixer, clips, ci: Math.max(0, clips.findIndex(c => c.name === 'Idle')), label, file, x, z };
+    const play = () => { mixer.stopAllAction(); const a = mixer.clipAction(clips[it.ci]); a.reset().play(); it.el.querySelector('i').textContent = clips[it.ci].name; };
+    const el = document.createElement('div'); el.className = 'lb' + (USED.has(file) ? ' used' : ''); el.innerHTML = `<b>${label}</b><i></i>`; document.body.appendChild(el); it.el = el; it.play = play; items.push(it); play();
+  } catch (e) { console.warn('errore', file, e.message); }
+});
+addEventListener('click', e => {
+  const r = new THREE.Raycaster(), n = new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); r.setFromCamera(n, camera);
+  let best = null, bd = 1e9; for (const it of items) { const d = r.ray.distanceToPoint(new THREE.Vector3(it.x, 1, it.z)); if (d < 1.4 && d < bd) { bd = d; best = it; } }
+  if (best) { best.ci = (best.ci + 1) % best.clips.length; best.play(); }
+});
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+(function loop() {
+  requestAnimationFrame(loop); const dt = Math.min(0.05, clock.getDelta());
+  for (const it of items) { it.mixer.update(dt); it.root.rotation.y = Math.sin(performance.now() / 2600 + it.x) * 0.35; const v = new THREE.Vector3(it.x, -0.05, it.z + 0.6).project(camera); it.el.style.left = ((v.x * 0.5 + 0.5) * innerWidth) + 'px'; it.el.style.top = ((-v.y * 0.5 + 0.5) * innerHeight) + 'px'; }
+  renderer.render(scene, camera);
+})();
+window.__monlab = { items };
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+upload/
+assets_download/
+*.mp4
+.claude/
+main_before_*.js
+main_v1_arena.js
+index_v1_arena.html
+*.log
+tools/_extra_modelli.txt

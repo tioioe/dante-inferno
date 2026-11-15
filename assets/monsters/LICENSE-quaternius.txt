@@ -1,0 +1,3 @@
+Quaternius Ultimate Monsters Pack - CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Source: https://quaternius.com/packs/ultimatemonsters.html
+Files used: Demon, Orc_Skull, BlueDemon, Orc, Birb, Alien, Dino, Tribal, Yeti (glTF)

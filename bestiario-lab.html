@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bestiario dell'Inferno — i mostri della Commedia</title>
+<link rel="stylesheet" href="hud.css">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0405;color:#e8d2b0}
+  canvas{display:block}
+  #top{position:fixed;left:0;right:0;top:10px;text-align:center;pointer-events:none;text-shadow:0 0 10px #000,0 2px 3px #000}
+  #top h1{font:700 26px var(--f-title);letter-spacing:.14em;margin:0;color:#f6dca6}
+  #top div{font:italic 16px var(--f-body);color:#d8b080;margin-top:3px}
+  #bar{position:fixed;left:0;right:0;bottom:12px;text-align:center}
+  #bar button{font:700 12px var(--f-label);letter-spacing:.12em;margin:0 3px;padding:7px 12px;background:#2a1410;color:#f0d8a8;border:1px solid #7a4a2a;cursor:pointer}
+  #bar button.on{background:#6a2a14;border-color:#ffb060}
+  .lb{position:fixed;transform:translate(-50%,0);text-align:center;pointer-events:none;white-space:nowrap;text-shadow:0 0 6px #000,0 2px 2px #000}
+  .lb b{display:block;font:700 14px var(--f-label);letter-spacing:.1em;color:#f6dca6}
+  .lb i{display:block;font:italic 13px var(--f-body);color:#bfa27c;margin-top:1px}
+</style>
+</head>
+<body>
+<div id="top"><h1>BESTIARIO DELL'INFERNO</h1><div>I mostri della Divina Commedia, modellati a mano — clicca un mostro per cambiare animazione</div></div>
+<div id="bar"></div>
+<script type="importmap">{"imports":{"three":"./lib/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { buildBestiary } from './bestiario-core.js';
+import * as SkeletonUtils from './lib/jsm/utils/SkeletonUtils.js';
+const q = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true; document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0e0506); scene.fog = new THREE.FogExp2(0x120808, 0.016);
+const camera = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.3, 120);
+scene.add(new THREE.HemisphereLight(0xc8ccd8, 0x1a1412, 0.9));
+const sun = new THREE.DirectionalLight(0xfff2e6, 2.3); sun.position.set(6, 12, 9); sun.castShadow = true; Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 14, bottom: -14 }); sun.shadow.mapSize.set(2048, 2048); scene.add(sun);
+const rim = new THREE.DirectionalLight(0x6a88ff, 1.0); rim.position.set(-8, 6, -8); scene.add(rim);
+const warm = new THREE.PointLight(0xff7a30, 60, 40, 2); warm.position.set(0, 3, 6); scene.add(warm);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(90, 40), new THREE.MeshStandardMaterial({ color: 0x241a17, roughness: 0.95 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const bestiary = buildBestiary();
+const ORDER = [['mSegugio', 'Segugio', 'Inf. VI — figli di Cerbero'], ['mAnima', 'Anima', 'Inf. V — come stornei'], ['mIngordo', 'Ingordo', 'Inf. VI — Ciacco'], ['mSemiramide', 'Semiramide', 'Inf. V — la regina'], ['mMalebranca', 'Malebranca', 'Inf. XXI — i diavoli col forcone'], ['mArpia', 'Arpia', 'Inf. XIII — ali late, visi umani'], ['mFuria', 'Furia', 'Inf. IX — idre verdissime'], ['mMinotauro', 'Minotauro', 'Inf. XII — l\'infamia di Creti'], ['mCaronte', 'Caronte', 'Inf. III — occhi di bragia'], ['mMinosse', 'Minosse', 'Inf. V — orribile giudice'], ['mCerbero', 'Cerbero', 'Inf. VI — tre gole']];
+const ANIMS = ['Idle', 'Running', 'Punch', 'HitReact', 'Death'];
+const SIZE = { mSegugio: 1.3, mAnima: 1.7, mIngordo: 3.0, mSemiramide: 3.6, mMalebranca: 1.7, mArpia: 1.7, mFuria: 3.6, mMinotauro: 3.4, mCaronte: 3.6, mMinosse: 5.8, mCerbero: 6.6 };
+const only = q.get('only'), items = [], clock = new THREE.Clock();
+let xs = 0; const gaps = { mSegugio: 1.4, mAnima: 1.4, mIngordo: 2.4, mSemiramide: 3.0, mMalebranca: 1.6, mArpia: 1.8, mFuria: 2.2, mMinotauro: 2.4, mCaronte: 2.6, mMinosse: 3.6, mCerbero: 5.2 };
+const list = ORDER.filter(o => !only || o[0] === only);
+const total = list.reduce((s, o) => s + gaps[o[0]] * 2, 0); xs = -total / 2;
+for (const [key, label, verse] of list) {
+  const src = bestiary[key]; if (!src) continue;
+  const model = SkeletonUtils.clone(src.scene), root = new THREE.Group(); root.add(model);
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  const mixer = new THREE.AnimationMixer(model), act = {}; src.anims.forEach(c => act[c.name] = mixer.clipAction(c));
+  xs += gaps[key]; root.position.set(xs, 0, 0); root.rotation.y = only ? 0.5 : 0; xs += gaps[key]; scene.add(root);
+  const el = document.createElement('div'); el.className = 'lb'; el.innerHTML = `<b>${label.toUpperCase()}</b><i>${verse}</i>`; document.body.appendChild(el);
+  items.push({ key, root, mixer, act, el, x: root.position.x, cur: null, h: SIZE[key] });
+}
+function setAnim(it, name) { const a = it.act[name]; if (!a) return; if (it.cur) it.act[it.cur].stop(); a.reset(); const once = name === 'Death' || name === 'HitReact'; a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = once; a.play(); it.cur = name; it.ai = ANIMS.indexOf(name); }
+const startAnim = q.get('anim') || 'Idle'; items.forEach(it => setAnim(it, startAnim));
+const fixedT = q.get('t'); if (fixedT != null) { items.forEach(it => { it.mixer.setTime(+fixedT); }); }
+const bar = document.getElementById('bar');
+ANIMS.forEach(n => { const b = document.createElement('button'); b.textContent = n.toUpperCase(); b.onclick = () => { items.forEach(it => setAnim(it, n)); [...bar.children].forEach(c => c.classList.toggle('on', c === b)); }; if (n === startAnim) b.className = 'on'; bar.appendChild(b); });
+addEventListener('click', e => {
+  const r = new THREE.Raycaster(), n = new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); r.setFromCamera(n, camera);
+  let best = null, bd = 1e9; for (const it of items) { const d = r.ray.distanceToPoint(new THREE.Vector3(it.x, it.h / 2, 0)); if (d < it.h * 0.45 && d < bd) { bd = d; best = it; } }
+  if (best) setAnim(best, ANIMS[(best.ai + 1) % ANIMS.length]);
+});
+const cam = q.get('cam');
+if (only) { const h = SIZE[only]; camera.position.set(0, h * 0.62, h * 2.6); camera.lookAt(0, h * 0.5, 0); }
+else { const hf = Math.atan(Math.tan(17 * Math.PI / 180) * innerWidth / innerHeight); camera.position.set(0, 8, Math.max(26, total / 2 / Math.tan(hf) * 1.06)); camera.lookAt(0, 2.4, 0); }
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+const v = new THREE.Vector3();
+(function loop() {
+  requestAnimationFrame(loop); const dt = Math.min(clock.getDelta(), 0.05);
+  if (fixedT == null) items.forEach(it => it.mixer.update(dt));
+  items.forEach(it => { v.set(it.x, 0, 0).project(camera); it.el.style.left = ((v.x * 0.5 + 0.5) * innerWidth) + 'px'; it.el.style.top = (((-v.y * 0.5 + 0.5) * innerHeight) + 6) + 'px'; });
+  renderer.render(scene, camera);
+})();
+window.__lab = { items, bestiary, THREE, camera, renderer };
+</script>
+</body>
+</html>

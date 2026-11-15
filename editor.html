@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor delle mappe — Inferno</title>
+<style>
+  :root{--bg:#0c0708;--panel:#17100f;--line:#3a2a22;--gold:#c8a060;--txt:#e8d2b0;--dim:#9a8468;--acc:#ff7a3a}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font:14px "Palatino Linotype",Georgia,serif}
+  #app{display:grid;grid-template-rows:48px 1fr 28px;grid-template-columns:1fr 360px;height:100%}
+  #bar{grid-column:1/3;display:flex;align-items:center;gap:8px;padding:0 12px;background:#120b0a;border-bottom:1px solid var(--line)}
+  #bar h1{font-size:16px;margin:0 12px 0 0;letter-spacing:.1em;color:var(--gold);font-weight:normal;white-space:nowrap}
+  #bar button{white-space:nowrap}
+  #bar{overflow-x:auto;overflow-y:hidden}
+  button,select,input{font:inherit;color:var(--txt)}
+  button{background:#2a1a14;border:1px solid #5a3a28;padding:5px 11px;cursor:pointer;border-radius:3px}
+  button:hover{background:#3a2418;border-color:var(--acc)}
+  button.primary{background:#6a2410;border-color:var(--acc)}
+  button.on{background:#5a3a18;border-color:var(--gold)}
+  .sep{width:1px;height:24px;background:var(--line);margin:0 4px}
+  #cv{width:100%;height:100%;display:block;cursor:crosshair;background:#0a0606}
+  #wrap{position:relative;overflow:hidden}
+  #hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--dim);background:#0a0606cc;padding:5px 9px;border-radius:3px;pointer-events:none;max-width:70%}
+  #side{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:12px 14px}
+  #side h2{font-size:15px;color:var(--gold);margin:14px 0 6px;letter-spacing:.08em;font-weight:normal;border-bottom:1px solid var(--line);padding-bottom:3px}
+  #side h2:first-child{margin-top:0}
+  label{display:block;margin:6px 0;color:var(--dim);font-size:13px}
+  label input[type=text],label input[type=number],label select{width:100%;margin-top:2px;background:#0c0808;border:1px solid var(--line);padding:4px 6px;border-radius:3px}
+  label input[type=range]{width:100%;margin-top:2px}
+  label input[type=color]{width:100%;height:28px;margin-top:2px;background:#0c0808;border:1px solid var(--line);padding:1px}
+  .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+  .chk{display:flex;align-items:center;gap:7px;margin:6px 0;color:var(--txt)}
+  .list{border:1px solid var(--line);border-radius:3px;margin:4px 0}
+  .item{display:flex;gap:4px;align-items:center;padding:3px 5px;border-bottom:1px solid #2a1c16;font-size:12px}
+  .item:last-child{border-bottom:0}
+  .item input{width:100%;min-width:0;background:#0c0808;border:1px solid var(--line);padding:2px 4px;border-radius:3px}
+  .item select{background:#0c0808;border:1px solid var(--line);border-radius:3px}
+  .item button{padding:1px 7px}
+  #status{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 12px;font-size:12px;color:var(--dim);background:#120b0a;border-top:1px solid var(--line)}
+  .warn{color:#ff9a5a}.ok{color:#8ad07a}
+  .note{font-size:12px;color:var(--dim);margin:4px 0;line-height:1.4}
+  .tabs{display:flex;gap:4px}
+  .chip{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:10px;font-size:12px;margin:2px 3px 2px 0;cursor:pointer;color:var(--txt);background:#1e1410}
+  .chip:hover{border-color:var(--acc)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bar">
+    <h1>EDITOR DELLE MAPPE</h1>
+    <div class="tabs" id="tabs"></div>
+    <div class="sep"></div>
+    <button id="bAdd" title="Aggiunge una camera dopo quella selezionata">+ Camera</button>
+    <button id="bDel" title="Elimina la camera selezionata">Elimina camera</button>
+    <div class="sep"></div>
+    <button id="bUndo" title="Ctrl+Z">↶ Annulla</button>
+    <button id="bRedo" title="Ctrl+Y">↷ Ripeti</button>
+    <div class="sep"></div>
+    <button id="bPlay" class="primary" title="Apre il gioco con queste mappe">▶ Prova nel gioco</button>
+    <button id="bSave" title="Scrive maps.js (scegli il file maps.js nella cartella del gioco)">💾 Salva maps.js</button>
+    <button id="bReset" title="Torna alle mappe di maps.js">↺ Ripristina</button>
+  </div>
+  <div id="wrap"><canvas id="cv"></canvas><div id="hint"></div></div>
+  <div id="side"></div>
+  <div id="status"><span id="stSave"></span><span id="stWarn"></span><span style="margin-left:auto" id="stPos"></span></div>
+</div>
+<script type="module" src="./editor.js"></script>
+</body>
+</html>
