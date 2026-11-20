@@ -144,8 +144,12 @@ export function dressDante(actor, opts = {}) {
   const tailSway = dt => { const S = tailLag(dt); tailPivot.quaternion.copy(tailBase).multiply(tq.setFromEuler(te.set(-S.z * 2.6, 0, S.x * 2.6))); };
 
   /* ---------- il lucco: busto, gonna, cintura, collo alto ---------- */
-  lathe([[0.001, 1.512], [0.062, 1.508], [0.115, 1.49], [0.175, 1.46], [0.212, 1.415], [0.205, 1.35], [0.19, 1.27], [0.18, 1.2], [0.2, 1.145], [0.178, 1.1], [0.185, 1.045]], M.red, 'Spine1', 1.0, 0.74,
+  lathe([[0.001, 1.512], [0.062, 1.508], [0.115, 1.49], [0.175, 1.46], [0.212, 1.415], [0.205, 1.35], [0.19, 1.27], [0.18, 1.2], [0.2, 1.145], [0.178, 1.1], [0.185, 1.045]], M.red, 'Spine1', 1.0, 0.92,
     0.03, y => Math.min(1, Math.max(0, (1.36 - y) / 0.3)));      // il busto si arriccia sopra la cintura (stoffa raccolta in vita)
+  /* petto e pancia: il lucco copre un torace pieno e una pancia da uomo di mezza età (prima il busto era una colonna piatta) */
+  const chestBall = ball(new V3(0, 1.34, 0.045), 0.17, M.red, 'Spine2', 1.3, 0.92, 1.0);
+  ball(new V3(-0.075, 1.36, 0.1), 0.085, M.redDark, 'Spine2', 1.0, 0.8, 0.8); ball(new V3(0.075, 1.36, 0.1), 0.085, M.redDark, 'Spine2', 1.0, 0.8, 0.8);   // pieghe del petto sotto la stoffa
+  ball(new V3(0, 1.07, 0.06), 0.18, M.red, 'Spine1', 1.08, 1.0, 1.0);                                           // la pancia
   const skirtMat = M.red.clone(); skirtMat.side = THREE.DoubleSide;
   const skirt = lathe([[0.185, 1.07], [0.2, 1.0], [0.232, 0.86], [0.27, 0.62], [0.31, 0.4], [0.335, 0.24], [0.34, 0.2]], skirtMat, 'Hips', 1.0, 0.9, 0.09);
   // gonna dinamica: l'orlo resta indietro quando corri, segue i passi delle gambe e respira da fermo
