@@ -32,14 +32,14 @@ export const TRACKS = {
 const MUL = { pad: 2.4, bass: 1.8, bell: 1.8, perc: 0.8, ost: 1.6, brass: 1.5 };      // bilanciamento dei livelli
 
 export function createMusic(sound) {
-  const M = { state: null, intensity: 0, vol: 1, playing: false, muted: false };
+  const M = { state: null, intensity: 0, vol: 1, playing: false, muted: false, duckK: 1 };
   let ctx, out, send, noiseBuf, timer, step = 0, nextT = 0;
   const L = {};                                              // livelli: nome → GainNode
 
   M.start = (state = 'explore') => {
     if (M.playing || !sound.ctx || !sound.master) return false;
     ctx = sound.ctx;
-    out = ctx.createGain(); out.gain.value = M.muted ? 0 : M.vol; out.connect(sound.master);
+    out = ctx.createGain(); out.gain.value = M.muted ? 0 : M.vol * M.duckK; out.connect(sound.master);
     send = ctx.createGain(); send.gain.value = 0.6; out.connect(send); send.connect(sound.verbIn);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -50,8 +50,10 @@ export function createMusic(sound) {
     return true;
   };
   M.stop = () => { if (!M.playing) return; M.playing = false; clearInterval(timer); out.gain.setTargetAtTime(0, ctx.currentTime, 0.8); };
-  M.setMuted = m => { M.muted = m; if (out) out.gain.setTargetAtTime(m ? 0 : M.vol, ctx.currentTime, 0.15); };
-  M.setVolume = v => { M.vol = v; if (out && !M.muted) out.gain.setTargetAtTime(v, ctx.currentTime, 0.15); };
+  M.setMuted = m => { M.muted = m; if (out) out.gain.setTargetAtTime(m ? 0 : M.vol * M.duckK, ctx.currentTime, 0.15); };
+  /* abbassa la musica (k<1) mentre parla una voce, poi la riporta a 1 */
+  M.duck = (k, tc = 0.45) => { M.duckK = k; if (out && !M.muted) out.gain.setTargetAtTime(M.vol * k, ctx.currentTime, tc); };
+  M.setVolume = v => { M.vol = v; if (out && !M.muted) out.gain.setTargetAtTime(v * M.duckK, ctx.currentTime, 0.15); };
   M.setIntensity = x => { M.intensity = clamp(x, 0, 1); };
   M.setState = (name, instant = false) => {
     if (!TRACKS[name] || (M.state === name && !instant)) return; M.state = name;

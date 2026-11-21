@@ -42,13 +42,13 @@ else {
     scene.add(grp);
     if (solid) obstacles.push({ x, z, r: 0.5 * k + 0.15 });
   }
-  const LEN = 24;                                         // durata totale dell'intro in secondi
+  const LEN = 41;                                         // durata totale dell'intro: segue la lettura del Canto I (40 s)
   // percorso di Dante e della macchina da presa (usati anche per tenere liberi alberi e sentiero)
-  const danteAt = t => ({ x: Math.sin(t * 0.6) * 0.35, z: -12.5 + clamp((t - 1.0) / 21, 0, 1) * 15 });
+  const danteAt = t => ({ x: Math.sin(t * 0.6) * 0.35, z: -12.5 + clamp((t - 1.0) / (LEN - 3), 0, 1) * 15 });
   // la macchina da presa gira intorno a Dante: scelgo lato e distanza che evitano le colonne già presenti nella camera
   const camAtP = (t, sign, rk) => {
-    const d = danteAt(t), a = sign * (0.18 + 0.07 * t), r = (6.0 + t * 0.14) * rk;
-    return { x: d.x + Math.sin(a) * r, y: 1.55 + t * 0.18, z: d.z - Math.cos(a) * r };
+    const d = danteAt(t), u = t * 24 / LEN, a = sign * (0.18 + 0.07 * u), r = (6.0 + u * 0.14) * rk;      // u: il giro della camera resta quello dei 24 s originali
+    return { x: d.x + Math.sin(a) * r, y: 1.55 + u * 0.18, z: d.z - Math.cos(a) * r };
   };
   let camSign = 1, camRk = 1;
   (function pickCam() {
@@ -87,23 +87,25 @@ else {
   })();
 
   /* ---------- la sequenza ---------- */
+  /* i versi sono sincronizzati con la lettura registrata (assets/voce/canto1.mp3, Liber Liber):
+     l = secondi dell'audio in cui la voce comincia ciascun verso (misurati dalle pause della registrazione) */
   const VERSES = [
-    { t: 1.6, d: 5.2,
-      v: 'Nel mezzo del cammin di nostra vita<br>mi ritrovai per una selva oscura,<br>ché la diritta via era smarrita.',
+    { t: 7.4, d: 10.6, l: [7.75, 11.39, 14.42],
+      v: ['Nel mezzo del cammin di nostra vita', 'mi ritrovai per una selva oscura,', 'ché la diritta via era smarrita.'],
       p: 'A metà del cammino della nostra vita mi ritrovai in una foresta buia, perché avevo smarrito la strada giusta.' },
-    { t: 7.9, d: 5.6,
-      v: 'Ahi quanto a dir qual era è cosa dura<br>esta selva selvaggia e aspra e forte<br>che nel pensier rinova la paura!',
+    { t: 18.4, d: 10.4, l: [18.68, 21.85, 25.67],
+      v: ['Ahi quanto a dir qual era è cosa dura', 'esta selva selvaggia e aspra e forte', 'che nel pensier rinova la paura!'],
       p: 'Com’è difficile dire com’era questa selva selvaggia, aspra e impenetrabile: a ripensarci, la paura ritorna.' },
-    { t: 14.5, d: 5.6,
-      v: 'Io non so ben ridir com’i’ v’intrai,<br>tant’era pien di sonno a quel punto<br>che la verace via abbandonai.',
-      p: 'Non so spiegare bene come vi entrai: ero così pieno di sonno, in quel momento, che lasciai la via della verità.' }
+    { t: 28.9, d: 10.0, l: [29.12, 32.14, 37.22],
+      v: ['Tant’è amara che poco è più morte;', 'ma per trattar del ben ch’i’ vi trovai,', 'dirò de l’altre cose ch’i’ v’ho scorte.'],
+      p: 'È così amara che la morte lo è appena di più; ma per parlare del bene che vi trovai, dirò delle altre cose che vi ho visto.' }
   ];
   // le tre fiere: lonza, leone, lupa — solo occhi nel buio
   const EYES_MAT = [0xffd24a, 0xff8a2a, 0xff3020].map(c => new THREE.MeshBasicMaterial({ color: col(c, 5) }));
   const BEASTS = [
-    { t: 9.5, x: -8.5, y: 0.45, z: -2, mat: 0, sep: 0.16 },       // lonza: bassa, agile
-    { t: 14.8, x: 10, y: 1.5, z: 2.5, mat: 1, sep: 0.3 },          // leone: alto
-    { t: 18.5, x: -9, y: 1.0, z: 8, mat: 2, sep: 0.22 }            // lupa: rossa
+    { t: 21, x: -8.5, y: 0.45, z: -2, mat: 0, sep: 0.16 },       // lonza: bassa, agile
+    { t: 30, x: 10, y: 1.5, z: 2.5, mat: 1, sep: 0.3 },          // leone: alto
+    { t: 37, x: -9, y: 1.0, z: 8, mat: 2, sep: 0.22 }            // lupa: rossa
   ].map(b => {
     const grp = new THREE.Group(); grp.position.set(b.x, b.y, b.z); grp.visible = false;
     for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), EYES_MAT[b.mat]); e.position.x = s * b.sep; e.scale.set(1, 0.6, 1); grp.add(e); }
@@ -117,7 +119,7 @@ else {
   function showVerse(i) {
     const el = $('verse');
     if (i < 0) { el.style.opacity = 0; return; }
-    el.firstChild.innerHTML = VERSES[i].v; el.lastChild.textContent = VERSES[i].p; el.style.opacity = 1;
+    el.firstChild.innerHTML = VERSES[i].v.map(x => '<i style="display:block;font-style:italic;opacity:0;transition:opacity .8s">' + x + '</i>').join(''); el.lastChild.textContent = VERSES[i].p; el.lastChild.style.opacity = 0; el.lastChild.style.transition = 'opacity 1s'; el.style.opacity = 1;
   }
 
   function startIntro() {
@@ -154,7 +156,7 @@ else {
     S.t += dt; const t = S.t;
     if (S.voce) S.voce.volume = 0.9 * clamp((LEN - 0.4 - t) / 2.2, 0, 1);   // la voce sfuma verso la fine
     // Dante: cammina nella selva
-    const k = clamp((t - 1.0) / 21, 0, 1), dp = danteAt(t);
+    const k = clamp((t - 1.0) / (LEN - 3), 0, 1), dp = danteAt(t);
     P.pos.set(dp.x, 0, dp.z);
     P.actor.root.position.copy(P.pos); P.actor.root.rotation.y = Math.sin(t * 0.5) * 0.12;     // si guarda un po' intorno
     g.play(P.actor, t > 1.0 && k < 1 ? 'Walk' : 'Idle', 0.5);
@@ -163,20 +165,22 @@ else {
     if (t > 1.0 && k < 1) { S.step += dt; if (S.step > 1.15) { S.step = 0; g.tone(72, 0.09, 'sine', 0.05, -20); } }
     S.drone -= dt; if (S.drone <= 0) { S.drone = 5.5; g.tone(55, 6.5, 'sine', 0.035); g.tone(82.4, 6.5, 'sine', 0.018); }
     // versi
-    let vi = -1; VERSES.forEach((v, i) => { if (t >= v.t && t < v.t + v.d) vi = i; });
+    const ta = S.voce && !S.voce.paused && S.voce.currentTime > 0.2 ? S.voce.currentTime : t;   // orologio della voce: il testo segue l'audio, non il cronometro
+    let vi = -1; VERSES.forEach((v, i) => { if (ta >= v.t && ta < v.t + v.d) vi = i; });
     if (vi !== S.vi) { S.vi = vi; showVerse(vi); }
+    if (vi >= 0) { const el = $('verse'), V = VERSES[vi]; [...el.firstChild.children].forEach((c, j) => { c.style.opacity = ta >= V.l[j] - 0.15 ? 1 : 0; }); el.lastChild.style.opacity = ta >= V.l[2] + 1.2 ? 1 : 0; }
     // fiere
     for (const b of BEASTS) {
       if (t >= b.t && !b.seen) { b.seen = true; b.grp.visible = true; g.tone(60, 0.25, 'sine', 0.12); setTimeout(() => g.tone(60, 0.25, 'sine', 0.1), 330); }
       if (b.seen) { const blink = Math.sin(t * 1.7 + b.x) > 0.96 ? 0.1 : 1; b.grp.scale.y = blink; }
     }
     // luce e nebbia: dal crepuscolo al buio, poi di nuovo il tono di gioco
-    const dark = smooth(clamp(t / 16, 0, 1)), back = smooth(clamp((t - (LEN - 3)) / 3, 0, 1));
+    const dark = smooth(clamp(t / 27, 0, 1)), back = smooth(clamp((t - (LEN - 3)) / 3, 0, 1));
     scene.fog.density = (0.010 + 0.024 * dark) * (1 - back) + base.fog * back;
     renderer.toneMappingExposure = (1.35 - 0.55 * dark) * (1 - back) + base.exp * back;
     torch.intensity = 22 + 33 * dark;
     $('fade').style.opacity = t < 1.6 ? 1 - t / 1.6 : 0; $('fade').style.transition = 'none';
-    if (t > 3) $('canto').style.opacity = 0;
+    if (t > 5.5) $('canto').style.opacity = 0;
     // macchina da presa: dietro Dante, poi gira lentamente e sale fino alla visuale di gioco
     const cp = camAt(t);
     cin.set(cp.x, cp.y, cp.z);

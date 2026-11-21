@@ -11,6 +11,20 @@ else {
   const music = window.__music = createMusic(sound);
   let combat = false, holdUntil = 0;
 
+  /* abbassa la musica ogni volta che parte una lettura del canto (assets/voce/…): intro, Canto I e cinematiche dei cerchi */
+  (function () {
+    const proto = HTMLAudioElement.prototype, orig = proto.play; let n = 0;
+    proto.play = function () {
+      const a = this;
+      if (/\/voce\//.test(a.src || '') && !a.__duck) {
+        a.__duck = true; n++; music.duck(0.28, 0.5);
+        const off = () => { if (!a.__duck) return; a.__duck = false; n--; if (n <= 0) { n = 0; music.duck(1, 1.4); } };
+        a.addEventListener('pause', off); a.addEventListener('ended', off); a.addEventListener('error', off);
+      }
+      return orig.apply(this, arguments);
+    };
+  })();
+
   function pick(G, P) {
     const st = G.state;
     if (st === 'title') return 'title';
