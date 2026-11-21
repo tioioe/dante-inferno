@@ -133,11 +133,12 @@ else {
     P.actor.root.visible = true;
     const w = P.actor.act.Walk; if (w) w.timeScale = 0.62;               // passo stanco, di chi ha sonno
     g.play(P.actor, 'Walk', 0.1);
+    try { if (S.voce) S.voce.pause(); S.voce = new Audio('./assets/voce/canto1.mp3'); S.voce.volume = 0.9; S.voce.play().catch(() => {}); } catch (e) { S.voce = null; }   // voce del canto I (Liber Liber)
     scene.fog.density = 0.010; renderer.toneMappingExposure = 1.35;
   }
 
   function endIntro() {
-    S.active = false;
+    S.active = false; if (S.voce) { try { S.voce.pause(); } catch (e) {} S.voce = null; }
     showVerse(-1);
     $('canto').style.opacity = 0; $('skip').style.display = 'none'; $('fade').style.opacity = 0;
     BEASTS.forEach(b => { b.grp.visible = false; });
@@ -151,6 +152,7 @@ else {
   function update(dt) {
     if (!S.active) return;
     S.t += dt; const t = S.t;
+    if (S.voce) S.voce.volume = 0.9 * clamp((LEN - 0.4 - t) / 2.2, 0, 1);   // la voce sfuma verso la fine
     // Dante: cammina nella selva
     const k = clamp((t - 1.0) / 21, 0, 1), dp = danteAt(t);
     P.pos.set(dp.x, 0, dp.z);
