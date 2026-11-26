@@ -1069,7 +1069,7 @@ function dash() {
 }
 function usePotion() {
   if (P.potCd > 0 || P.potions <= 0 || P.dead || P.hp >= P.max) return;
-  P.potions--; P.potCd = 4; const h = Math.round(P.max * 0.4); P.hp = Math.min(P.max, P.hp + h);
+  P.potions--; window.__terz && window.__terz.potion(); P.potCd = 4; const h = Math.round(P.max * 0.4); P.hp = Math.min(P.max, P.hp + h);
   sfx.potion(); popup(P.pos.x, 2.2, P.pos.z, '+' + h, 'heal'); emit(P.pos.x, 1, P.pos.z, 24, 0x6aff8a, 3, 4, 0.8);
 }
 function moveVec() {

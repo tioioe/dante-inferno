@@ -56,9 +56,9 @@ else {
 
   /* ---------------- pozioni ---------------- */
   let buffRef = null, buffBonus = 0;
-  function useFede() { if (G.state !== 'play' || P.dead || S.fede <= 0 || P.fede >= P.maxF) return; S.fede--; P.fede = Math.min(P.maxF, P.fede + 60); popup(P.pos.x, 2.2, P.pos.z, '+60 Fede', 'heal'); g.emit(P.pos.x, 1, P.pos.z, 24, 0x6aa8ff, 3, 4, 0.8); g.sfx.potion && g.sfx.potion(); }
+  function useFede() { if (G.state !== 'play' || P.dead || S.fede <= 0 || P.fede >= P.maxF) return; S.fede--; window.__terz && window.__terz.potion(); P.fede = Math.min(P.maxF, P.fede + 60); popup(P.pos.x, 2.2, P.pos.z, '+60 Fede', 'heal'); g.emit(P.pos.x, 1, P.pos.z, 24, 0x6aa8ff, 3, 4, 0.8); g.sfx.potion && g.sfx.potion(); }
   function useElisir() {
-    if (G.state !== 'play' || P.dead || S.elisir <= 0 || S.elisirT > 0) return; S.elisir--; S.elisirT = 30;
+    if (G.state !== 'play' || P.dead || S.elisir <= 0 || S.elisirT > 0) return; S.elisir--; window.__terz && window.__terz.potion(); S.elisirT = 30;
     popup(P.pos.x, 2.2, P.pos.z, 'ELISIR DEL VELTRO', 'xp'); g.emit(P.pos.x, 1, P.pos.z, 40, 0xffb030, 4, 5, 0.9); g.sfx.potion && g.sfx.potion();
   }
   function tickBuff(dt) {
