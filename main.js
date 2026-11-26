@@ -1032,23 +1032,24 @@ function slash() {
     if (d < 3.3 + e.T.r && Math.abs(angDiff(Math.atan2(dx, dz), P.aim)) < 1.2) { const r = dmgRoll(1); hitEnemy(e, r.dmg, dx / (d || 1), dz / (d || 1), 11, r.crit); gainFede(7); }
   }
 }
+const AB = k => (window.__abi ? window.__abi.r[k] : 1);   // grado dell'abilità (0 = non ancora sbloccata)
 function fire() {
-  if (P.fireCd > 0 || P.dead || P.fede < 12) return;
-  P.fede -= 12; P.fireCd = 1.0; P.face = P.aim; sfx.fire();
+  if (!AB('fire') || P.fireCd > 0 || P.dead || P.fede < 12) return;
+  P.fede -= 12; P.fireCd = 1.0 - 0.1 * (AB('fire') - 1); P.face = P.aim; sfx.fire();
   const m = new THREE.Mesh(new THREE.SphereGeometry(0.36, 10, 8), new THREE.MeshBasicMaterial({ color: col(0xffa030, 3) }));
   const dir = new V3(Math.sin(P.aim), 0, Math.cos(P.aim));
   m.position.set(P.pos.x + dir.x, 1.1, P.pos.z + dir.z);
   scene.add(m); G.shots.push({ m, dir, life: 1.0, hit: new Set() });
 }
 function turbine() {
-  if (P.turbCd > 0 || P.dead || P.fede < 30 || P.spinT > 0) return;
-  P.fede -= 30; P.turbCd = 2.0; P.spinT = 0.9; P.spinHit = 0; sfx.nova();
+  if (!AB('turb') || P.turbCd > 0 || P.dead || P.fede < 30 || P.spinT > 0) return;
+  P.fede -= 30; P.turbCd = 2.0 - 0.2 * (AB('turb') - 1); P.spinT = 0.9; P.spinHit = 0; sfx.nova();
   addRing(P.pos.x, P.pos.z, 'twirl_01', 0xff8a30, 4.3, 0.9, { follow: true, spin: -14, grow: false, k: 3, y: 0.3 });
   addRing(P.pos.x, P.pos.z, 'twirl_02', 0xffc060, 3.6, 0.9, { follow: true, spin: -9, grow: false, k: 2.4, y: 0.5 });
 }
 function nova() {
-  if (P.novaCd > 0 || P.dead || P.fede < 25) return;
-  P.fede -= 25; P.novaCd = 7.0; sfx.nova(); sfx.boom();
+  if (!AB('nova') || P.novaCd > 0 || P.dead || P.fede < 25) return;
+  P.fede -= 25; P.novaCd = 7.0 - 0.7 * (AB('nova') - 1); sfx.nova(); sfx.boom();
   addRing(P.pos.x, P.pos.z, 'magic_02', 0x9ac8ff, 7.6, 0.55, { k: 3 });
   addRing(P.pos.x, P.pos.z, 'circle_03', 0xc8e4ff, 7.6, 0.4, { k: 3, y: 0.14 });
   flash(P.pos.x, 1.2, P.pos.z, 9, 0x7ab4ff, 0.3);
@@ -1056,14 +1057,14 @@ function nova() {
   for (const e of G.enemies) {
     if (e.dead) continue;
     const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
-    if (d < 7.5 + e.T.r) { const r = dmgRoll(1.4); hitEnemy(e, r.dmg, dx / (d || 1), dz / (d || 1), 17, r.crit); if (!e.T.boss) { e.stun = 0.9; e.state = 'recover'; e.st = 0.9; } }
+    if (d < 7.5 + 0.5 * (AB('nova') - 1) + e.T.r) { const r = dmgRoll(1.4 * (1 + 0.2 * (AB('nova') - 1))); hitEnemy(e, r.dmg, dx / (d || 1), dz / (d || 1), 17, r.crit); if (!e.T.boss) { const st = 0.9 + 0.15 * (AB('nova') - 1); e.stun = st; e.state = 'recover'; e.st = st; } }
   }
 }
 function dash() {
-  if (P.dashCd > 0 || P.dead || P.spinT > 0) return;
+  if (!AB('dash') || P.dashCd > 0 || P.dead || P.spinT > 0) return;
   const mv = moveVec();
   P.dashDir.copy(mv.lengthSq() > 0 ? mv : new V3(Math.sin(P.aim), 0, Math.cos(P.aim)));
-  P.dashT = 0.18; P.dashCd = 0.9; P.inv = 0.3; sfx.dash();
+  P.dashT = 0.18; P.dashCd = 0.9 - 0.1 * (AB('dash') - 1); P.inv = 0.3 + 0.06 * (AB('dash') - 1); sfx.dash();
   emit(P.pos.x, 0.3, P.pos.z, 14, 0xffaa60, 3, 1.5, 0.4);
 }
 function usePotion() {
@@ -1119,7 +1120,7 @@ function updatePlayer(dt) {
       for (const e of G.enemies) {
         if (e.dead) continue;
         const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz);
-        if (d < 3.9 + e.T.r) { const r = dmgRoll(0.7); hitEnemy(e, r.dmg, dx / (d || 1), dz / (d || 1), 7, r.crit); }
+        if (d < 3.9 + 0.25 * (AB('turb') - 1) + e.T.r) { const r = dmgRoll(0.7 * (1 + 0.2 * (AB('turb') - 1))); hitEnemy(e, r.dmg, dx / (d || 1), dz / (d || 1), 7, r.crit); }
       }
     }
   } else if (mouse.down) slash();
@@ -1355,7 +1356,7 @@ function updateShots(dt) {
       if (Math.random() < 0.6) fxSpark.spawn(sp.x, 1.1, sp.z, R(-1.5, 1.5), R(0.5, 2.5), R(-1.5, 1.5), R(0.3, 0.6), 0.4, 0.05, 3.2, 1.4, 0.4, 1, 0, 6, 0.4); }
     for (const e of G.enemies) {
       if (e.dead || s.hit.has(e)) continue;
-      if (Math.hypot(e.pos.x - s.m.position.x, e.pos.z - s.m.position.z) < e.T.r + 0.45) { s.hit.add(e); const r = dmgRoll(2.2); hitEnemy(e, r.dmg, s.dir.x, s.dir.z, 9, r.crit); }
+      if (Math.hypot(e.pos.x - s.m.position.x, e.pos.z - s.m.position.z) < e.T.r + 0.45) { s.hit.add(e); const r = dmgRoll(2.2 * (1 + 0.25 * (AB('fire') - 1))); hitEnemy(e, r.dmg, s.dir.x, s.dir.z, 9, r.crit); }
     }
     for (const o of obstacles) if (Math.hypot(o.x - s.m.position.x, o.z - s.m.position.z) < o.r) s.life = 0;
     if (s.life <= 0) { scene.remove(s.m); s.dead = true; emit(s.m.position.x, 1, s.m.position.z, 16, 0xffa040, 5, 3); fireBurst(s.m.position.x, 0.8, s.m.position.z, 6, 0.8, 0xff8a30, false); flash(s.m.position.x, 1.1, s.m.position.z, 3.4, 0xff8a30, 0.2); }
