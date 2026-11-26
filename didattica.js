@@ -230,7 +230,13 @@ else {
   /* ---------------- regie ---------------- */
   const seenRoom = new Set(), seenBoss = new WeakSet(); let introDone = false, lastCircle = 0;
   const awakeNear = (r = 16) => G.enemies.some(e => !e.dead && e.state !== 'idle' && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < r);
+  /* all'inizio di ogni cerchio compare prima la mappa a pergamena (dove si trova Dante), poi la cinematica */
   function circleCine(c) {
+    if (!CIRCLE[c]) return false;
+    if (window.__mappa && window.__mappa.intro(() => circleCine2(c))) return true;
+    return circleCine2(c);
+  }
+  function circleCine2(c) {
     const L = CIRCLE[c]; if (!L) return false;
     const center = new V3(P.pos.x, 1.5, P.pos.z), up = new V3(P.pos.x, 3, P.pos.z);
     const salto = c === 1 ? [{ focus: up, off: [3, 4, 12], dur: 1.2, hold: 5.2, cap: { title: 'La discesa salta le prime porte', verse: ['Lasciate ogne speranza, voi ch’intrate.', 'E caddi come l’uom cui sonno piglia.'], ref: 'Inf. III, 9 e 136',

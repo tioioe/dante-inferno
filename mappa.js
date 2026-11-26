@@ -1,5 +1,5 @@
 /* ============================================================
-   mappa.js — la voragine dell'Inferno su pergamena (tasto M)
+   mappa.js — la voragine dell'Inferno su pergamena (tasto C)
    Mostra in quale cerchio e in quale canto ti trovi, con il disegno
    a imbuto dei nove cerchi. Usa solo window.__game.
    ============================================================ */
@@ -28,7 +28,7 @@ if (g) {
   @keyframes mpulse{0%,100%{opacity:.35}50%{opacity:.95}}`;
   document.head.appendChild(st);
   const wrap = document.createElement('div'); wrap.id = 'mappa'; document.body.appendChild(wrap);
-  const btn = document.createElement('div'); btn.id = 'mapbtn'; btn.textContent = 'MAPPA · M'; document.body.appendChild(btn);
+  const btn = document.createElement('div'); btn.id = 'mapbtn'; btn.textContent = 'MAPPA · C'; document.body.appendChild(btn);
 
   const W = 1040, H = 690, CX = 285, TOP = 172, BOT = 548, R0 = 215, R1 = 26, RY = 0.2;
   const ring = i => { const f = i / 10; return { y: TOP + (BOT - TOP) * Math.pow(f, 0.92), r: R0 + (R1 - R0) * Math.pow(f, 0.8) }; };
@@ -82,22 +82,29 @@ if (g) {
     <text x="${bx + bw / 2}" y="${H - 96}" text-anchor="middle" font-size="18" font-weight="700" fill="#3a2210" font-family="'Cinzel',Georgia,serif">${esc('Cerchio ' + L.n + ' — ' + L.name + ' · ' + L.canti)}</text>
     <text x="${bx + bw / 2}" y="${H - 75}" text-anchor="middle" font-size="15" font-style="italic" fill="#5a3a1c">${esc(L.who + ' — camera ' + ch + ' di ' + nCh)}</text>
     <text x="70" y="${H - 80}" font-size="13" fill="#6a4a28" font-style="italic">✓ già attraversato   ➤ qui   ✝ oltre il gioco</text>
-    <text x="70" y="${H - 62}" font-size="13" fill="#6a4a28" font-style="italic">M o Esc per chiudere</text></svg>`;
+    <text x="70" y="${H - 62}" font-size="13" fill="#6a4a28" font-style="italic">C o Esc per chiudere</text></svg>`;
     wrap.innerHTML = '<div class="perg">' + s + '<div class="x">CHIUDI ✕</div></div>';
     wrap.querySelector('.x').onclick = close;
   }
-  let open = false, was = false;
+  let open = false, was = false, after = null, auto = 0;
   function openMap() {
     if (open || G.state !== 'play') return;
     was = true; G.state = 'cine'; open = true; build(); wrap.style.display = 'flex';
   }
-  function close() { if (!open) return; open = false; wrap.style.display = 'none'; if (was && G.state === 'cine') G.state = 'play'; was = false; }
-  wrap.addEventListener('mousedown', e => { e.stopPropagation(); if (e.target === wrap) close(); });
+  function close() { if (!open) return; open = false; clearTimeout(auto); wrap.style.display = 'none'; if (was && G.state === 'cine') G.state = 'play'; was = false; const cb = after; after = null; if (cb) cb(); }
+  // all'ingresso in un cerchio: la mappa si apre da sola, poi continua la cinematica
+  function intro(cb) {
+    if (open || G.state !== 'play') return false;
+    after = cb; openMap(); if (!open) { after = null; return false; }
+    const h = wrap.querySelector('svg text:last-of-type'); if (h) h.textContent = 'Clicca o premi un tasto per continuare';
+    auto = setTimeout(close, 9000); return true;
+  }
+  wrap.addEventListener('mousedown', e => { e.stopPropagation(); if (after || e.target === wrap) close(); });
   btn.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); open ? close() : openMap(); });
   addEventListener('keydown', e => {
     const k = e.key.toLowerCase();
-    if (open && (k === 'm' || k === 'escape')) { e.stopImmediatePropagation(); e.preventDefault(); close(); return; }
-    if (!open && k === 'm' && !e.ctrlKey && !e.metaKey && G.state === 'play') { e.preventDefault(); openMap(); }
+    if (open && (k === 'c' || k === 'escape' || (after && k !== 'shift' && k !== 'control' && k !== 'alt'))) { e.stopImmediatePropagation(); e.preventDefault(); close(); return; }
+    if (!open && k === 'c' && !e.ctrlKey && !e.metaKey && G.state === 'play') { e.preventDefault(); openMap(); }
   }, true);
-  window.__mappa = { open: openMap, close };
+  window.__mappa = { open: openMap, close, intro };
 }
