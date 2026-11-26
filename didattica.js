@@ -233,21 +233,14 @@ else {
   function circleCine(c) {
     const L = CIRCLE[c]; if (!L) return false;
     const center = new V3(P.pos.x, 1.5, P.pos.z), up = new V3(P.pos.x, 3, P.pos.z);
-    const ok = startCine([
+    const salto = c === 1 ? [{ focus: up, off: [3, 4, 12], dur: 1.2, hold: 5.2, cap: { title: 'La discesa salta le prime porte', verse: ['Lasciate ogne speranza, voi ch’intrate.', 'E caddi come l’uom cui sonno piglia.'], ref: 'Inf. III, 9 e 136',
+      text: 'Qui il gioco salta i canti II e III: la porta dell’Inferno, gli ignavi, Caronte e l’Acheronte. Dante, vinto dal terrore, sviene e si risveglia già oltre il fiume, sull’orlo dell’abisso: da qui comincia la partita.' } }] : [];
+    return startCine(salto.concat([
       { focus: up, off: [3, 4, 12], dur: 2.2, cap: null },
-      { focus: new V3(P.pos.x, 4.5, P.pos.z), off: [-9, 30, 14], dur: 2.8, hold: 1.6, cap: { title: L.title, verse: L.verse, ref: L.ref + ' · voce: Jenna Veniero, Liber Liber', text: L.text } }
-    ], () => { if (c === 1) startTut(); });
-    if (ok) leggiCanto(c);
-    return ok;
+      { focus: new V3(P.pos.x, 4.5, P.pos.z), off: [-9, 30, 14], dur: 2.8, hold: 1.6, cap: { title: L.title, verse: L.verse, ref: L.ref, text: L.text } }
+    ]), () => { if (c === 1) startTut(); });
   }
-  /* la voce del canto (Liber Liber, CC BY-NC-SA 4.0): i primi versi, con dissolvenza */
   let voce = null;
-  function leggiCanto(c) {
-    try {
-      stopVoce(); const u = { 1: './assets/voce/canto4.mp3', 2: './assets/voce/canto5.mp3', 3: './assets/voce/canto6.mp3' }[c]; if (!u) return;
-      voce = new Audio(u); voce.volume = 0.9; voce.play().catch(() => {});
-    } catch (e) { voce = null; }
-  }
   function stopVoce() { if (voce) { try { voce.pause(); } catch (e) {} voce = null; } }
   function roomCine(i) {
     const c = CH[i], R = ROOM[i]; if (!c || !R) return false;

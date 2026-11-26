@@ -42,7 +42,7 @@ else {
     scene.add(grp);
     if (solid) obstacles.push({ x, z, r: 0.5 * k + 0.15 });
   }
-  const LEN = 41;                                         // durata totale dell'intro: segue la lettura del Canto I (40 s)
+  const LEN = 44;                                         // durata totale dell'intro: segue la lettura del Canto I (40 s)
   // percorso di Dante e della macchina da presa (usati anche per tenere liberi alberi e sentiero)
   const danteAt = t => ({ x: Math.sin(t * 0.6) * 0.35, z: -12.5 + clamp((t - 1.0) / (LEN - 3), 0, 1) * 15 });
   // la macchina da presa gira intorno a Dante: scelgo lato e distanza che evitano le colonne già presenti nella camera
@@ -96,7 +96,7 @@ else {
     { t: 18.4, d: 10.4, l: [18.68, 21.85, 25.67],
       v: ['Ahi quanto a dir qual era è cosa dura', 'esta selva selvaggia e aspra e forte', 'che nel pensier rinova la paura!'],
       p: 'Com’è difficile dire com’era questa selva selvaggia, aspra e impenetrabile: a ripensarci, la paura ritorna.' },
-    { t: 28.9, d: 10.0, l: [29.12, 32.14, 37.22],
+    { t: 28.9, d: 12.6, l: [29.12, 32.14, 37.22],
       v: ['Tant’è amara che poco è più morte;', 'ma per trattar del ben ch’i’ vi trovai,', 'dirò de l’altre cose ch’i’ v’ho scorte.'],
       p: 'È così amara che la morte lo è appena di più; ma per parlare del bene che vi trovai, dirò delle altre cose che vi ho visto.' }
   ];
@@ -119,7 +119,7 @@ else {
   function showVerse(i) {
     const el = $('verse');
     if (i < 0) { el.style.opacity = 0; return; }
-    el.firstChild.innerHTML = VERSES[i].v.map(x => '<i style="display:block;font-style:italic;opacity:0;transition:opacity .8s">' + x + '</i>').join(''); el.lastChild.textContent = VERSES[i].p; el.lastChild.style.opacity = 0; el.lastChild.style.transition = 'opacity 1s'; el.style.opacity = 1;
+    el.firstChild.innerHTML = VERSES[i].v.map(x => '<i style="display:block;font-style:italic;opacity:0;transition:opacity .8s">' + x + '</i>').join(''); el.lastChild.textContent = VERSES[i].p; el.lastChild.style.opacity = 1; el.lastChild.style.transition = 'opacity 1s'; el.style.opacity = 1;
   }
 
   function startIntro() {
@@ -154,7 +154,7 @@ else {
   function update(dt) {
     if (!S.active) return;
     S.t += dt; const t = S.t;
-    if (S.voce) S.voce.volume = 0.9 * clamp((LEN - 0.4 - t) / 2.2, 0, 1);   // la voce sfuma verso la fine
+    if (S.voce) S.voce.volume = 0.9 * clamp((LEN - 0.3 - t) / 1.0, 0, 1);   // la voce sfuma verso la fine
     // Dante: cammina nella selva
     const k = clamp((t - 1.0) / (LEN - 3), 0, 1), dp = danteAt(t);
     P.pos.set(dp.x, 0, dp.z);
@@ -168,7 +168,7 @@ else {
     const ta = S.voce && !S.voce.paused && S.voce.currentTime > 0.2 ? S.voce.currentTime : t;   // orologio della voce: il testo segue l'audio, non il cronometro
     let vi = -1; VERSES.forEach((v, i) => { if (ta >= v.t && ta < v.t + v.d) vi = i; });
     if (vi !== S.vi) { S.vi = vi; showVerse(vi); }
-    if (vi >= 0) { const el = $('verse'), V = VERSES[vi]; [...el.firstChild.children].forEach((c, j) => { c.style.opacity = ta >= V.l[j] - 0.15 ? 1 : 0; }); el.lastChild.style.opacity = ta >= V.l[2] + 1.2 ? 1 : 0; }
+    if (vi >= 0) { const el = $('verse'), V = VERSES[vi]; [...el.firstChild.children].forEach((c, j) => { c.style.opacity = ta >= V.l[j] - 0.15 ? 1 : 0; }); el.lastChild.style.opacity = 1; }
     // fiere
     for (const b of BEASTS) {
       if (t >= b.t && !b.seen) { b.seen = true; b.grp.visible = true; g.tone(60, 0.25, 'sine', 0.12); setTimeout(() => g.tone(60, 0.25, 'sine', 0.1), 330); }
@@ -191,7 +191,7 @@ else {
     glook.set(P.pos.x, 0.6, P.pos.z); look.lerp(glook, s);
     camera.lookAt(look);
     g.followSun(P.pos);
-    if (t >= LEN) endIntro();
+    if (t >= LEN && !(S.voce && !S.voce.paused && !S.voce.ended && t < LEN + 3)) endIntro();
   }
 
   // /?intro  → avvia da solo l'intro (usato dal link "Rivedi l'intro" della pagina delle storie)
